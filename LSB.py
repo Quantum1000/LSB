@@ -33,19 +33,31 @@ def write_LSB(img, data):
                 if(bit >= 8):
                     index += 1
                     bit = 0
+
                 if(index < len(data)):
-                    img[i,j,k] = (img[i,j,k] & ~np.uint8(1)) | ((ord(data[index]) & (np.uint8(1) << bit)) >> bit)
+                    char = data[index]
+                    if isinstance(char, str) and ord(char) <= 255:
+                        value = ord(char)
+                    else:
+                        value = ord("'")  # use (') as default value for non-ASCII characters
+
+                    img[i, j, k] = (img[i, j, k] & ~np.uint8(1)) | ((value & (np.uint8(1) << bit)) >> bit)
                     bit += 1
+
                 elif(index == len(data)):
                     img[i,j,k] = img[i,j,k] & ~np.uint8(1)
                     bit += 1
+
                 else:
                     break
 
 
+with open('message.txt', 'r', encoding='utf-8', errors='ignore') as file:
+    message = file.read()
+    print(message.encode('ascii', 'ignore').decode('ascii'))
 cover = ImRead.from_file("yacht.bmp").pixel_array
 stego = np.copy(cover)
-write_LSB(stego, "Hello world!")
+write_LSB(stego, message)
 ImWrite.arr_to_file(stego, "new.bmp")
 stego = ImRead.from_file("new.bmp").pixel_array
 print(read_LSB(stego))
