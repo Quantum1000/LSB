@@ -1,10 +1,13 @@
 from bmp_io import BMPImageReader as ImRead
 from bmp_io import BMPImageWriter as ImWrite
+from psnr import calculate_mse, calculate_psnr
+from hist import PDH
+import numpy as np
 
 def read_LSB(img):
     count = 0
     output = 0
-    string = "Message: "
+    string = ""
     bit = 0
     for row in img:
         for col in row:
@@ -14,11 +17,11 @@ def read_LSB(img):
                     output = 0
                     bit = 0
                     count += 1
-                if(ord(string[-1]) == 0):
+                if(len(string) != 0 and ord(string[-1]) == 0):
                     break
                 output = output | (color & 1) << bit
                 bit += 1
-    print(string)
+    return string
 
 
 def write_LSB(img, data):
@@ -40,9 +43,11 @@ def write_LSB(img, data):
                     break
 
 
-image = ImRead.from_file("new.bmp").pixel_array
-img = np.copy(image)
-write_LSB(img, "Hello world!")
-ImWrite.arr_to_file(img, "new.bmp")
-img = ImRead.from_file("new.bmp").pixel_array
-read_LSB(img)
+cover = ImRead.from_file("yacht.bmp").pixel_array
+stego = np.copy(cover)
+write_LSB(stego, "Hello world!")
+ImWrite.arr_to_file(stego, "new.bmp")
+stego = ImRead.from_file("new.bmp").pixel_array
+print(read_LSB(stego))
+PDH(cover, stego)
+calculate_psnr(cover, stego)

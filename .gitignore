@@ -11,3 +11,6 @@
 /new3.webp
 /new4.webp
 __pycache__/bmp_io.cpython-312.pyc
+ac1000.bmp
+__pycache__/hist.cpython-312.pyc
+__pycache__/psnr.cpython-312.pyc
