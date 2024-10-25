@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 def calculate_mse(image1, image2):
     """Calculate the Mean Squared Error (MSE) between two images."""

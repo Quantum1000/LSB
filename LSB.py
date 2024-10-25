@@ -3,6 +3,7 @@ from bmp_io import BMPImageWriter as ImWrite
 from psnr import calculate_mse, calculate_psnr
 from hist import PDH
 import numpy as np
+import os
 
 def read_LSB(img):
     count = 0
@@ -51,8 +52,10 @@ def write_LSB(img, data):
                 else:
                     break
 
+script_dir = os.path.dirname(__file__)
+rel_path = "text_files/50KB.txt"
 
-with open('message.txt', 'r', encoding='utf-8', errors='ignore') as file:
+with open(os.path.join(script_dir, rel_path), 'r', encoding='utf-8', errors='ignore') as file:
     message = file.read()
     print(message.encode('ascii', 'ignore').decode('ascii'))
 cover = ImRead.from_file("yacht.bmp").pixel_array
