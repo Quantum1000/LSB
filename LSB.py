@@ -61,7 +61,6 @@ def read_LSB(img):
     string = ""
     bit = 0
     cbit = 0
-    maxi = 0
     done = False
     shape = img.shape
     img = img.reshape((-1))
@@ -74,7 +73,6 @@ def read_LSB(img):
                 output = 0
                 bit = 0
             if(len(string) != 0 and ord(string[-1]) == 0):
-                maxi = i
                 done = True
                 break
             output = output | (img[i] & 1 << cbit) >> cbit << bit
@@ -89,12 +87,14 @@ def write_LSB(img, data):
     string = ""
     bit = 0
     cbit = 0
-    maxi = 0
+    count = 0
     done = False
     shape = img.shape
     img = img.reshape((-1))
     rng = np.random.default_rng(seed=seed)
     indices = rng.permutation(len(img))
+    print(len(img))
+    print(len(indices))
     while cbit <= 8 and not done:
         for i in indices:
             if(bit >= 8):
@@ -109,32 +109,33 @@ def write_LSB(img, data):
 
                 img[i] = (img[i] & ~(np.uint8(1) << cbit)) | ((value & (np.uint8(1) << bit)) >> bit << cbit)
                 bit += 1
+                count += 1
             # if the data is done being read, add a null terminator
             elif(index == len(data)):
                 img[i] = img[i] & ~(np.uint8(1) << cbit)
                 bit += 1
+                count += 1
             else:
                 done = True
-                maxi = i
                 break
         cbit += 1
-    bpc = (cbit + maxi / len(img))
+    bpc = (count / len(img))
     return bpc
     
         
 
 script_dir = os.path.dirname(__file__)
-rel_path = "text_files/156KB.txt"
+rel_path = "text_files/40KB.txt"
 
 with open(os.path.join(script_dir, rel_path), 'r', encoding='utf-8', errors='ignore') as file:
     message = file.read()
     #print(message.encode('ascii', 'ignore').decode('ascii'))
 cover = ImRead.from_file("yacht.bmp").pixel_array
 stego = np.copy(cover)
-print(write_LSB(stego, message))
-print(stego.shape)
+bpc = write_LSB(stego, message)
 ImWrite.arr_to_file(stego, "new.bmp")
 stego = ImRead.from_file("new.bmp").pixel_array
 print(read_LSB(stego))
-PDH(cover, stego)
-print(calculate_psnr(cover, stego))
+print(bpc)
+psnr = calculate_psnr(cover, stego)
+print(psnr)
