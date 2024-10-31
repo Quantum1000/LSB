@@ -1,9 +1,11 @@
 from bmp_io import BMPImageReader as ImRead
 from bmp_io import BMPImageWriter as ImWrite
-from psnr import calculate_mse, calculate_psnr, compare_psnr
+from psnr import calculate_mse, calculate_psnr, add_psnr, view_psnr_comparison
 from hist import PDH
 import numpy as np
 import os
+import re
+
 seed = 42
 
 # Requires bpp to be a power of 2
@@ -120,30 +122,50 @@ def write_LSB(img, data):
     return bpc
 
 
+def get_size_from_filename(name):
+    match = re.search(r'(\d+)', name)  # Find the first sequence of digits in the filename
+    return int(match.group()) if match else float('inf')  # Convert to integer, or use inf if no digits found
+
+
 script_dir = os.path.dirname(__file__)
-rel_path = "text_files/400KB.txt"
+rel_path_template = "text_files/{size}.txt"
 img = "yacht.bmp"
 
-with open(os.path.join(script_dir, rel_path), 'r', encoding='utf-8', errors='ignore') as file:
-    message = file.read()
-    message.encode('ascii', 'ignore').decode('ascii')
-cover = ImRead.from_file(img).pixel_array
-stego1 = np.copy(cover)
-stego2 = np.copy(cover)
+# Define the text_files directory path
+text_files_dir = os.path.join(script_dir, "text_files")
 
-write_LSB(stego1, message)
-# print(stego1.shape)
-ImWrite.arr_to_file(stego1, "new.bmp")
-stego = ImRead.from_file("new.bmp").pixel_array
-# print(read_LSB(stego))
-ls2b_psnr = calculate_psnr(cover, stego)
+# Loop through each file in the text_files directory
+directory = sorted(os.listdir(text_files_dir), key=get_size_from_filename)
+for filename in directory:
+    # Check if it's a file and has the expected "KB" format
+    if os.path.isfile(os.path.join(text_files_dir, filename)) and "KB" in filename:
+        size = filename.split('.')[0]
 
-old_write_LSB(stego2, message, 2)
-ImWrite.arr_to_file(stego2, "new2.bmp")
-old_stego = ImRead.from_file("new2.bmp").pixel_array
-# print(old_read_LSB(stego, 1))
-PDH(stego, old_stego)
-lsb_psnr = calculate_psnr(cover, old_stego)
+        # Update the rel_path based on the file's name size
+        rel_path = rel_path_template.format(size=size)
 
-file_size = file_name = os.path.splitext(os.path.basename(rel_path))[0]
-compare_psnr(img, file_size, lsb_psnr, ls2b_psnr)
+        with open(os.path.join(script_dir, rel_path), 'r', encoding='utf-8', errors='ignore') as file:
+            message = file.read()
+            message.encode('ascii', 'ignore').decode('ascii')
+        cover = ImRead.from_file(img).pixel_array
+        stego1 = np.copy(cover)
+        stego2 = np.copy(cover)
+
+        old_write_LSB(stego2, message, 1)
+        ImWrite.arr_to_file(stego2, "lsb.bmp")
+        old_stego = ImRead.from_file("lsb.bmp").pixel_array
+        # print(old_read_LSB(stego, 1))
+        # PDH(stego, old_stego)
+        lsb_psnr = calculate_psnr(cover, old_stego)
+
+        write_LSB(stego1, message)
+        # print(stego1.shape)
+        ImWrite.arr_to_file(stego1, "lsxb.bmp")
+        stego = ImRead.from_file("lsxb.bmp").pixel_array
+        # print(read_LSB(stego))
+        lsxb_psnr = calculate_psnr(cover, stego)
+
+        file_size = os.path.splitext(os.path.basename(rel_path))[0]
+        add_psnr(img, file_size, lsb_psnr, lsxb_psnr)
+
+view_psnr_comparison()

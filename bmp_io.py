@@ -12,6 +12,7 @@ HORIZONTAL_RESOLUTION = 2835    # pixels/meter
 VERTICAL_RESOLUTION = 2835      # pixels/meter
 TOTAL_HEADER_SIZE = 54          # Dib header size + file header size
 
+
 class BMPImageReader:
     def __init__(self, pixel_array):
         self.pixel_array = pixel_array  # NumPy array of shape (height, width, 3) for BGR channels
@@ -61,6 +62,7 @@ class BMPImageWriter:
     @staticmethod
     def arr_to_file(np_array, file_path):
         BMPImageWriter.to_file(BMPImageReader(np_array), file_path)
+
     def to_file(bmp_image, file_path):
         """Writes the BMPImageReader object back to a BMP file"""
         height, width, channels = bmp_image.pixel_array.shape  # Dynamically get the shape
@@ -93,5 +95,5 @@ class BMPImageWriter:
                 f.write(row.tobytes())  # Write row as bytes
                 f.write(b'\x00' * (row_padded - width * 3))  # Add padding to the row
 
-        print(f"BMP image saved as {file_path}")
+        # print(f"BMP image saved as {file_path}")
 

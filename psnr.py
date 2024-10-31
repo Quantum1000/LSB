@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import math
 
+df = pd.DataFrame(columns=["Image", "Text_Size", "LSB_PSNR", "LSXB_PSNR", "Difference"])
+
+
 def calculate_mse(image1, image2):
     """Calculate the Mean Squared Error (MSE) between two images."""
     return np.mean((image1 - image2) ** 2)
@@ -16,16 +19,20 @@ def calculate_psnr(original, stego):
     return psnr
 
 
-def compare_psnr(image, txt_file, lsb_psnr, ls2b_psnr):
-    """Display the difference between the PSNRs of LSB and LS2B implementation"""
-    psnr_difference = lsb_psnr - ls2b_psnr
+def add_psnr(image, txt_file, lsb_psnr, lsxb_psnr):
+    """Add the PSNR comparisons of LSB and LSXB implementation to df"""
+    global df
+    psnr_difference = lsb_psnr - lsxb_psnr
 
-    data = {
+    data = pd.DataFrame({
         "Image": [image],
-        "Text_File": [txt_file],
-        "PSNR_LSB": [lsb_psnr],
-        "PSNR_LS2B": [ls2b_psnr],
+        "Text_Size": [txt_file],
+        "LSB_PSNR": [lsb_psnr],
+        "LSXB_PSNR": [lsxb_psnr],
         "Difference": [psnr_difference]
-    }
-    df = pd.DataFrame(data)
+    })
+    df = pd.concat([df, data], ignore_index=True)
+
+def view_psnr_comparison():
+    """Display the stored PSNR comparisons"""
     print(df)
