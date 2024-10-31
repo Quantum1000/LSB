@@ -1,6 +1,6 @@
 from bmp_io import BMPImageReader as ImRead
 from bmp_io import BMPImageWriter as ImWrite
-from psnr import calculate_mse, calculate_psnr
+from psnr import calculate_mse, calculate_psnr, compare_psnr
 from hist import PDH
 import numpy as np
 import os
@@ -93,8 +93,7 @@ def write_LSB(img, data):
     img = img.reshape((-1))
     rng = np.random.default_rng(seed=seed)
     indices = rng.permutation(len(img))
-    print(len(img))
-    print(len(indices))
+
     while cbit <= 8 and not done:
         for i in indices:
             if(bit >= 8):
@@ -121,21 +120,32 @@ def write_LSB(img, data):
         cbit += 1
     bpc = (count / len(img))
     return bpc
-    
-        
+
 
 script_dir = os.path.dirname(__file__)
-rel_path = "text_files/40KB.txt"
+rel_path = "text_files/400KB.txt"
+img = "yacht.bmp"
 
 with open(os.path.join(script_dir, rel_path), 'r', encoding='utf-8', errors='ignore') as file:
     message = file.read()
-    #print(message.encode('ascii', 'ignore').decode('ascii'))
-cover = ImRead.from_file("yacht.bmp").pixel_array
-stego = np.copy(cover)
-bpc = write_LSB(stego, message)
-ImWrite.arr_to_file(stego, "new.bmp")
+    message.encode('ascii', 'ignore').decode('ascii')
+cover = ImRead.from_file(img).pixel_array
+stego1 = np.copy(cover)
+stego2 = np.copy(cover)
+
+write_LSB(stego1, message)
+# print(stego1.shape)
+ImWrite.arr_to_file(stego1, "new.bmp")
 stego = ImRead.from_file("new.bmp").pixel_array
-print(read_LSB(stego))
-print(bpc)
-psnr = calculate_psnr(cover, stego)
-print(psnr)
+# print(read_LSB(stego))
+ls2b_psnr = calculate_psnr(cover, stego)
+
+old_write_LSB(stego2, message, 2)
+ImWrite.arr_to_file(stego2, "new2.bmp")
+old_stego = ImRead.from_file("new2.bmp").pixel_array
+# print(old_read_LSB(stego, 1))
+PDH(stego, old_stego)
+lsb_psnr = calculate_psnr(cover, old_stego)
+
+file_size = file_name = os.path.splitext(os.path.basename(rel_path))[0]
+compare_psnr(img, file_size, lsb_psnr, ls2b_psnr)
