@@ -107,11 +107,11 @@ def write_LSB(img, data):
                 else:
                     value = ord("'")  # use (') as default value for non-ASCII characters
 
-                img[i] = (img[i] & ~np.uint8(1) << cbit) | ((value & (np.uint8(1) << bit)) >> bit << cbit)
+                img[i] = (img[i] & ~(np.uint8(1) << cbit)) | ((value & (np.uint8(1) << bit)) >> bit << cbit)
                 bit += 1
             # if the data is done being read, add a null terminator
             elif(index == len(data)):
-                img[i] = img[i] & ~np.uint8(1) << cbit
+                img[i] = img[i] & ~(np.uint8(1) << cbit)
                 bit += 1
             else:
                 done = True
