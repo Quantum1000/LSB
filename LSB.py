@@ -15,12 +15,12 @@ def old_read_LSB(img, bpp):
     for row in img:
         for col in row:
             for color in col:
-                if(bit >= 8):
-                    string+=chr(output)
+                if (bit >= 8):
+                    string += chr(output)
                     output = 0
                     bit = 0
                     count += 1
-                if(len(string) != 0 and ord(string[-1]) == 0):
+                if (len(string) != 0 and ord(string[-1]) == 0):
                     break
                 output = output | (color & (2**bpp-1)) << bit
                 bit += bpp
@@ -33,12 +33,12 @@ def old_write_LSB(img, data, bpp):
     bit = 0
     for i in range(len(img)):
         for j in range(len(img[i])):
-            for k in range(len(img[i,j])):
-                if(bit >= 8):
+            for k in range(len(img[i, j])):
+                if (bit >= 8):
                     index += 1
                     bit = 0
 
-                if(index < len(data)):
+                if (index < len(data)):
                     char = data[index]
                     if isinstance(char, str) and ord(char) <= 255:
                         value = ord(char)
