@@ -62,7 +62,6 @@ def read_LSB(img):
     bit = 0
     cbit = 0
     done = False
-    shape = img.shape
     img = img.reshape((-1))
     rng = np.random.default_rng(seed=seed)
     indices = rng.permutation(len(img))
@@ -89,12 +88,9 @@ def write_LSB(img, data):
     cbit = 0
     count = 0
     done = False
-    shape = img.shape
     img = img.reshape((-1))
     rng = np.random.default_rng(seed=seed)
     indices = rng.permutation(len(img))
-    print(len(img))
-    print(len(indices))
     while cbit <= 8 and not done:
         for i in indices:
             if(bit >= 8):
@@ -125,7 +121,7 @@ def write_LSB(img, data):
         
 
 script_dir = os.path.dirname(__file__)
-rel_path = "text_files/40KB.txt"
+rel_path = "text_files/156KB.txt"
 
 with open(os.path.join(script_dir, rel_path), 'r', encoding='utf-8', errors='ignore') as file:
     message = file.read()
@@ -137,5 +133,5 @@ ImWrite.arr_to_file(stego, "new.bmp")
 stego = ImRead.from_file("new.bmp").pixel_array
 print(read_LSB(stego))
 print(bpc)
-psnr = calculate_psnr(cover, stego)
-print(psnr)
+PDH(cover, stego)
+print(calculate_psnr(cover, stego))
