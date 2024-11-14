@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
+from pydantic import BaseModel
 import numpy as np
 from PIL import Image
 from LSB import old_read_LSB, old_write_LSB, read_LSB, write_LSB
