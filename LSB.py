@@ -138,6 +138,7 @@ text_files_dir = os.path.join(script_dir, "text_files")
 directory = sorted(os.listdir(text_files_dir), key=get_size_from_filename)
 for filename in directory:
     # Check if it's a file and has the expected "KB" format
+    # Check if it's a file and has the expected "KB" format
     if os.path.isfile(os.path.join(text_files_dir, filename)) and "KB" in filename:
         size = filename.split('.')[0]
 
@@ -151,12 +152,13 @@ for filename in directory:
         stego1 = np.copy(cover)
         stego2 = np.copy(cover)
 
-        old_write_LSB(stego2, message, 1)
+        old_write_LSB(stego2, message, 2)
         ImWrite.arr_to_file(stego2, "lsb.bmp")
         old_stego = ImRead.from_file("lsb.bmp").pixel_array
         # print(old_read_LSB(stego, 1))
         # PDH(stego, old_stego)
         lsb_psnr = calculate_psnr(cover, old_stego)
+        lsb_mse = calculate_mse(cover, old_stego)
 
         write_LSB(stego1, message)
         # print(stego1.shape)
@@ -164,8 +166,9 @@ for filename in directory:
         stego = ImRead.from_file("lsxb.bmp").pixel_array
         # print(read_LSB(stego))
         lsxb_psnr = calculate_psnr(cover, stego)
+        lsxb_mse = calculate_mse(cover, stego)
 
         file_size = os.path.splitext(os.path.basename(rel_path))[0]
-        add_psnr(img, file_size, lsb_psnr, lsxb_psnr)
+        add_psnr(img, file_size, lsb_psnr, lsb_mse, lsxb_psnr, lsxb_mse)
 
 view_psnr_comparison()
