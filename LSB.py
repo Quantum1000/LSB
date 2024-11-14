@@ -1,10 +1,12 @@
 from bmp_io import BMPImageReader as ImRead
 from bmp_io import BMPImageWriter as ImWrite
-from psnr import calculate_mse, calculate_psnr, add_psnr, view_psnr_comparison
+from psnr import calculate_mse, calculate_psnr, add_psnr
 from hist import PDH
 import numpy as np
 import os
 import re
+import matplotlib.pyplot as plt
+import pandas as pd
 
 seed = 42
 
@@ -135,9 +137,15 @@ img = "yacht.bmp"
 text_files_dir = os.path.join(script_dir, "text_files")
 
 # Loop through each file in the text_files directory
+df = pd.DataFrame()
 directory = sorted(os.listdir(text_files_dir), key=get_size_from_filename)
+
+def extract_text_size(filename):
+    # Use list comprehension to get the numeric part before 'KB'
+    size = ''.join([char for char in filename if char.isdigit()])
+    return int(size) if size else 0  # Convert to integer if it's not empty, else return 0
+
 for filename in directory:
-    # Check if it's a file and has the expected "KB" format
     # Check if it's a file and has the expected "KB" format
     if os.path.isfile(os.path.join(text_files_dir, filename)) and "KB" in filename:
         size = filename.split('.')[0]
@@ -152,7 +160,7 @@ for filename in directory:
         stego1 = np.copy(cover)
         stego2 = np.copy(cover)
 
-        old_write_LSB(stego2, message, 2)
+        old_write_LSB(stego2, message, 1)
         ImWrite.arr_to_file(stego2, "lsb.bmp")
         old_stego = ImRead.from_file("lsb.bmp").pixel_array
         # print(old_read_LSB(stego, 1))
@@ -169,6 +177,39 @@ for filename in directory:
         lsxb_mse = calculate_mse(cover, stego)
 
         file_size = os.path.splitext(os.path.basename(rel_path))[0]
-        add_psnr(img, file_size, lsb_psnr, lsb_mse, lsxb_psnr, lsxb_mse)
+        df = add_psnr(df, img, file_size, lsb_psnr, lsb_mse, lsxb_psnr, lsxb_mse)
+print(df)
 
-view_psnr_comparison()
+# Function to plot the PSNR comparison
+def plot_psnr_comparison():
+    """Plot a line chart comparing LSB vs LSXB PSNR values."""
+    plt.figure(figsize=(10, 6))
+
+    # Ensure 'Text_Size' is numeric (use the extract_text_size function to convert them)
+    df['Text_Size'] = df['Text_Size'].apply(extract_text_size)
+
+    # Set the x-axis to a logarithmic scale
+    plt.xscale('log')
+    
+    # Plot the LSB PSNR values
+    plt.plot(df['Text_Size'], df['LSB_PSNR'], label='LSB PSNR', color='blue', marker='o')
+
+    # Plot the LSXB PSNR values
+    plt.plot(df['Text_Size'], df['LSXB_PSNR'], label='LSXB PSNR', color='red', marker='x')
+
+    # Add labels and title
+    plt.xlabel('Text Size (KB)')
+    plt.ylabel('PSNR (dB)')
+    plt.title('PSNR Comparison between LSB and LSXB')
+
+    # Display the legend
+    plt.legend()
+
+    # Show the plot
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+# Call the function to plot the PSNR comparison chart
+plot_psnr_comparison()
+
