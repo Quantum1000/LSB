@@ -60,26 +60,51 @@ def old_write_LSB(img, data, bpp):
 
 def read_LSB(img):
     output = 0
-    string = ""
+    data = bytearray()
+    filename = bytearray()
     bit = 0
     cbit = 0
     done = False
     img = img.reshape((-1))
     rng = np.random.default_rng(seed=seed)
     indices = rng.permutation(len(img))
+    stage = 0
+    lenlen = 0
+    length = 0
     while cbit <= 8 and not done:
         for i in indices:
             if(bit >= 8):
-                string+=chr(output)
+                # this should select the least signficant bits of the int being used
+                data+=bytes(output)[0]
                 output = 0
                 bit = 0
-            if(len(string) != 0 and ord(string[-1]) == 0):
-                done = True
-                break
+            # In the first stage, the file name is read
+            if(stage == 0):
+                if(len(data) != 0 and ord(data[-1]) == 0):
+                    filename = data.decode()
+                    data = bytearray()
+                    stage = 1
+            # The second stage reads one byte to figure out how many length bytes it will read
+            elif(stage == 1):
+                if(bit == 0):
+                    lenlen = int(data)
+                    data = bytearray()
+                    stage = 2
+            # The third stage reads lenlen bytes to know how large the data is
+            elif(stage == 2):
+                if(len(data) == lenlen):
+                    length = int(data)
+                    data = bytearray()
+                    stage = 3
+            # The fourth stage reads length bytes of data
+            elif(stage == 3):
+                if(len(data) == length):
+                    done = True
+                    break
             output = output | (img[i] & 1 << cbit) >> cbit << bit
             bit += 1
         cbit += 1
-    return string
+    return (filename, data)
 
 
 def write_LSB(img, data):
