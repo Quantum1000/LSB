@@ -19,9 +19,8 @@ def calculate_psnr(original, stego):
     return psnr
 
 
-def add_psnr(image, txt_file, lsb_psnr, lsxb_psnr):
+def add_psnr(df, image, txt_file, lsb_psnr, lsxb_psnr):
     """Add the PSNR comparisons of LSB and LSXB implementation to df"""
-    global df
     psnr_difference = lsb_psnr - lsxb_psnr
 
     data = pd.DataFrame({
@@ -31,8 +30,4 @@ def add_psnr(image, txt_file, lsb_psnr, lsxb_psnr):
         "LSXB_PSNR": [lsxb_psnr],
         "Difference": [psnr_difference]
     })
-    df = pd.concat([df, data], ignore_index=True)
-
-def view_psnr_comparison():
-    """Display the stored PSNR comparisons"""
-    print(df)
+    return pd.concat([df, data], ignore_index=True)
