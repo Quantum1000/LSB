@@ -167,7 +167,7 @@ def get_size_from_filename(name):
 
 script_dir = os.path.dirname(__file__)
 rel_path_template = "text_files/{size}.txt"
-img = "yacht.bmp"
+img = "lakelodge.bmp"
 
 # Define the text_files directory path
 text_files_dir = os.path.join(script_dir, "text_files")
@@ -181,38 +181,36 @@ def extract_text_size(filename):
     size = ''.join([char for char in filename if char.isdigit()])
     return int(size) if size else 0  # Convert to integer if it's not empty, else return 0
 
+file_list = []
 for filename in directory:
-    # Check if it's a file and has the expected "KB" format
-    if os.path.isfile(os.path.join(text_files_dir, filename)) and "KB" in filename:
-        size = filename.split('.')[0]
+    if os.path.isfile(os.path.join(text_files_dir, filename)):
+        with open(os.path.join(script_dir, "text_files", filename), 'rb') as file:
+            data = file.read()
+        size = len(data)
+        file_list.append((size, filename, data))
 
-        # Update the rel_path based on the file's name size
-        rel_path = rel_path_template.format(size=size)
+file_list.sort()
+cover = ImRead.from_file(img).pixel_array
+for (size, filename, data) in file_list:
+    stego1 = np.copy(cover)
+    stego2 = np.copy(cover)
 
-        with open(os.path.join(script_dir, rel_path), 'rb') as file:
-            message = file.read()
-        cover = ImRead.from_file(img).pixel_array
-        stego1 = np.copy(cover)
-        stego2 = np.copy(cover)
+    bpp = write_LSB(stego1, filename, data)
+    # print(stego1.shape)
+    ImWrite.arr_to_file(stego1, "lsxb.bmp")
+    stego = ImRead.from_file("lsxb.bmp").pixel_array
+    # print(read_LSB(stego))
+    lsxb_psnr = calculate_psnr(cover, stego)
+    lsxb_mse = calculate_mse(cover, stego)
 
-        bpp = write_LSB(stego1, size+".txt", message)
-        # print(stego1.shape)
-        ImWrite.arr_to_file(stego1, "lsxb.bmp")
-        stego = ImRead.from_file("lsxb.bmp").pixel_array
-        # print(read_LSB(stego))
-        lsxb_psnr = calculate_psnr(cover, stego)
-        lsxb_mse = calculate_mse(cover, stego)
-
-        old_write_LSB(stego2, size+".txt", message, min(int(math.ceil(math.sqrt(bpp))**2),8))
-        ImWrite.arr_to_file(stego2, "lsb.bmp")
-        old_stego = ImRead.from_file("lsb.bmp").pixel_array
-        # print(old_read_LSB(stego, 1))
-        # PDH(stego, old_stego)
-        lsb_psnr = calculate_psnr(cover, old_stego)
-        lsb_mse = calculate_mse(cover, old_stego)
-
-        file_size = os.path.splitext(os.path.basename(rel_path))[0]
-        df = add_psnr(df, img, file_size, lsb_psnr, lsb_mse, lsxb_psnr, lsxb_mse)
+    old_write_LSB(stego2, filename, data, min(int(2**math.ceil(max(0,math.log2(bpp)))),8))
+    ImWrite.arr_to_file(stego2, "lsb.bmp")
+    old_stego = ImRead.from_file("lsb.bmp").pixel_array
+    # print(old_read_LSB(stego, 1))
+    # PDH(stego, old_stego)
+    lsb_psnr = calculate_psnr(cover, old_stego)
+    lsb_mse = calculate_mse(cover, old_stego)
+    df = add_psnr(df, img, filename, size, lsb_psnr, lsb_mse, lsxb_psnr, lsxb_mse, bpp)
 print(df)
 
 # Function to plot the PSNR comparison
@@ -220,20 +218,17 @@ def plot_psnr_comparison():
     """Plot a line chart comparing LSB vs LSXB PSNR values."""
     plt.figure(figsize=(10, 6))
 
-    # Ensure 'Text_Size' is numeric (use the extract_text_size function to convert them)
-    df['Text_Size'] = df['Text_Size'].apply(extract_text_size)
-
     # Set the x-axis to a logarithmic scale
     plt.xscale('log')
     
     # Plot the LSB PSNR values
-    plt.plot(df['Text_Size'], df['LSB_PSNR'], label='LSB PSNR', color='blue', marker='o')
+    plt.plot(df['Size'], df['LSB_PSNR'], label='LSB PSNR', color='blue', marker='o')
 
     # Plot the LSXB PSNR values
-    plt.plot(df['Text_Size'], df['LSXB_PSNR'], label='LSXB PSNR', color='red', marker='x')
+    plt.plot(df['Size'], df['LSXB_PSNR'], label='LSXB PSNR', color='red', marker='x')
 
     # Add labels and title
-    plt.xlabel('Text Size (KB)')
+    plt.xlabel('Data Size (B)')
     plt.ylabel('PSNR (dB)')
     plt.title('PSNR Comparison between LSB and LSXB')
 

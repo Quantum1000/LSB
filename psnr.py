@@ -19,18 +19,21 @@ def calculate_psnr(original, stego):
     return psnr
 
 
-def add_psnr(df, image, txt_file, lsb_psnr, lsb_mse, lsxb_psnr, lsxb_mse):
+def add_psnr(df, image, filename, size, lsb_psnr, lsb_mse, lsxb_psnr, lsxb_mse, bpp):
     """Add the PSNR comparisons of LSB and LSXB implementation to df"""
     psnr_difference = lsb_psnr - lsxb_psnr
 
     data = pd.DataFrame({
         "Image": [image],
-        "Text_Size": [txt_file],
+        "File": [filename],
+        "Size": [size],
         "LSB_PSNR": [lsb_psnr],
         "LSXB_PSNR": [lsxb_psnr],
         "LSB_MSE": [lsb_mse],
         "LSXB_MSE": [lsxb_mse],
-        "Difference": [psnr_difference]
+        "Difference": [psnr_difference],
+        "BPP": [bpp],
+        "Old_BPP": [min(int(2**math.ceil(max(0,math.log2(bpp)))),8)]
     })
     return pd.concat([df, data], ignore_index=True)
 
