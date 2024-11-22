@@ -19,3 +19,5 @@ __pycache__/hist.cpython-312.pyc
 __pycache__/psnr.cpython-312.pyc
 4bpp.bmp
 2bpp.bmp
+__pycache__/api.cpython-312.pyc
+__pycache__/LSB.cpython-312.pyc

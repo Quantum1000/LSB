@@ -20,29 +20,33 @@ class BMPImageReader:
     @staticmethod
     def from_file(file_path):
         with open(file_path, 'rb') as f:
-            file_header = f.read(BMP_FILE_HEADER_SIZE)
-            file_type, file_size, reserved1, reserved2, offset = struct.unpack('<2sIHHI', file_header)
-            assert file_type == b'BM', "Not a valid BMP file!"
+            return BMPImageReader.from_file_like(f)
 
-            dib_header = f.read(DIB_HEADER_SIZE)
-            header_size, width, height, planes, bpp, compression, img_size, h_res, v_res, num_colors, imp_colors = \
-                struct.unpack('<IIIHHIIIIII', dib_header)
-            assert bpp == BPP_VALUE, "Only 24-bit BMP files are supported!"
+    @staticmethod
+    def from_file_like(f):
+        file_header = f.read(BMP_FILE_HEADER_SIZE)
+        file_type, file_size, reserved1, reserved2, offset = struct.unpack('<2sIHHI', file_header)
+        assert file_type == b'BM', "Not a valid BMP file!"
 
-            # Read pixel data
-            f.seek(offset)  # Move to the start of pixel data
-            row_padded = (width * 3 + 3) & ~3  # Row size padded to 4 bytes
-            pixel_data = []
+        dib_header = f.read(DIB_HEADER_SIZE)
+        header_size, width, height, planes, bpp, compression, img_size, h_res, v_res, num_colors, imp_colors = \
+            struct.unpack('<IIIHHIIIIII', dib_header)
+        assert bpp == BPP_VALUE, "Only 24-bit BMP files are supported!"
 
-            for y in range(height):
-                row = np.frombuffer(f.read(row_padded), dtype=np.uint8)[:width * 3]
-                row = row.reshape((width, 3))  # Convert row into shape (width, 3) for B, G, R
-                pixel_data.append(row)
+        # Read pixel data
+        f.seek(offset)  # Move to the start of pixel data
+        row_padded = (width * 3 + 3) & ~3  # Row size padded to 4 bytes
+        pixel_data = []
 
-            # Convert the list of rows into a NumPy array
-            pixel_array = np.array(pixel_data, dtype=np.uint8)
+        for y in range(height):
+            row = np.frombuffer(f.read(row_padded), dtype=np.uint8)[:width * 3]
+            row = row.reshape((width, 3))  # Convert row into shape (width, 3) for B, G, R
+            pixel_data.append(row)
 
+        # Convert the list of rows into a NumPy array
+        pixel_array = np.array(pixel_data, dtype=np.uint8)
         return BMPImageReader(pixel_array)
+        
 
     def get_pixel(self, x, y):
         """Get the pixel at (x, y) as a tuple of regular integers (B, G, R)."""
